@@ -6,17 +6,17 @@ const Order = sequelize.define(
   "Order",
   {
     id: {
-      type: DataTypes.UUID,
+      type: DataTypes.STRING,
       defaultValue: () => uuidv4(),
       primaryKey: true,
     },
     userId: {
-      type: DataTypes.UUID,
+      type: DataTypes.STRING,
       allowNull: false,
       field: "user_id",
     },
     restaurantId: {
-      type: DataTypes.UUID,
+      type: DataTypes.STRING,
       allowNull: false,
       field: "restaurant_id",
     },

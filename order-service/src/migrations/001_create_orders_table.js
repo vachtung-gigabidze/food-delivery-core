@@ -22,8 +22,8 @@ async function runMigration() {
     const query = `
       CREATE TABLE IF NOT EXISTS orders (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id UUID NOT NULL,
-        restaurant_id UUID NOT NULL,
+        user_id VARCHAR(255) NOT NULL,
+        restaurant_id VARCHAR(255) NOT NULL,
         status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
         total_amount DECIMAL(10,2) NOT NULL,
         delivery_address JSONB NOT NULL,
