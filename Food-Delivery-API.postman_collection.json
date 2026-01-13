@@ -1,0 +1,607 @@
+{
+  "info": {
+    "_postman_id": "food-delivery-api-collection",
+    "name": "Food Delivery API",
+    "description": "Полная коллекция для тестирования микросервисной системы доставки еды",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🏠 Environment Setup",
+      "item": [
+        {
+          "name": "Set Environment Variables",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Установка переменных окружения",
+                  "pm.environment.set('base_url', 'http://localhost:3000');",
+                  "pm.environment.set('order_service_url', 'http://localhost:3001');",
+                  "pm.environment.set('delivery_service_url', 'http://localhost:3002');",
+                  "pm.environment.set('jwt_secret', 'supersecret');",
+                  "",
+                  "// Генерация тестовых данных",
+                  "const userId = 'user-' + Date.now();",
+                  "const restaurantId = 'restaurant-' + Math.floor(Math.random() * 1000);",
+                  "const orderId = 'order-' + Date.now();",
+                  "",
+                  "pm.environment.set('test_user_id', userId);",
+                  "pm.environment.set('test_restaurant_id', restaurantId);",
+                  "pm.environment.set('test_order_id', orderId);",
+                  "",
+                  "console.log('Environment variables set:');",
+                  "console.log('- User ID:', userId);",
+                  "console.log('- Restaurant ID:', restaurantId);",
+                  "console.log('- Order ID:', orderId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Get Test JWT Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{test_user_id}}\",\n  \"email\": \"test@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/token",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "token"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📦 Order Management",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "test-{{$timestamp}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{test_user_id}}\",\n  \"restaurantId\": \"{{test_restaurant_id}}\",\n  \"totalAmount\": 1500.50,\n  \"deliveryAddress\": {\n    \"address\": \"ул. Тестовая, д. 10, кв. 5\",\n    \"lat\": 55.7558,\n    \"lng\": 37.6176\n  },\n  \"items\": [\n    {\n      \"itemId\": \"pizza-1\",\n      \"name\": \"Пепперони\",\n      \"quantity\": 2,\n      \"price\": 750\n    },\n    {\n      \"itemId\": \"cola-1\",\n      \"name\": \"Coca-Cola\",\n      \"quantity\": 1,\n      \"price\": 150\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "test-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}"],
+              "variable": [
+                {
+                  "key": "order_id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Order Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PREPARING\",\n  \"reason\": \"Кухня начала готовить заказ\"\n}"
+            },
+            "url": {
+              "raw": "{{order_service_url}}/orders/{{order_id}}/status",
+              "host": ["{{order_service_url}}"],
+              "path": ["orders", "{{order_id}}", "status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{order_service_url}}/users/{{test_user_id}}/orders?limit=10&offset=0",
+              "host": ["{{order_service_url}}"],
+              "path": ["users", "{{test_user_id}}", "orders"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🚚 Delivery Service",
+      "item": [
+        {
+          "name": "Register Courier",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courierId\": \"courier-{{$timestamp}}\",\n  \"name\": \"Иван Курьеров\",\n  \"phone\": \"+79161234567\",\n  \"location\": {\n    \"lat\": 55.7558,\n    \"lng\": 37.6176\n  }\n}"
+            },
+            "url": {
+              "raw": "{{delivery_service_url}}/couriers/register",
+              "host": ["{{delivery_service_url}}"],
+              "path": ["couriers", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Find Nearby Couriers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{delivery_service_url}}/couriers/nearby?lat=55.7558&lng=37.6176&radius=5&limit=5",
+              "host": ["{{delivery_service_url}}"],
+              "path": ["couriers", "nearby"],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "55.7558"
+                },
+                {
+                  "key": "lng",
+                  "value": "37.6176"
+                },
+                {
+                  "key": "radius",
+                  "value": "5"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Courier to Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courierId\": \"courier-123\",\n  \"estimatedArrival\": \"{{$isoTimestamp}}\"\n}"
+            },
+            "url": {
+              "raw": "{{delivery_service_url}}/orders/{{order_id}}/assign",
+              "host": ["{{delivery_service_url}}"],
+              "path": ["orders", "{{order_id}}", "assign"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🏥 Health Checks",
+      "item": [
+        {
+          "name": "API Gateway Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Order Service Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{order_service_url}}/health",
+              "host": ["{{order_service_url}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delivery Service Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{delivery_service_url}}/health",
+              "host": ["{{delivery_service_url}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RabbitMQ Management UI",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic YWRtaW46YWRtaW4xMjM="
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:15672/api/overview",
+              "host": ["localhost"],
+              "port": "15672",
+              "path": ["api", "overview"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎯 Test Scenarios",
+      "item": [
+        {
+          "name": "Complete Order Flow",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "console.log('=== Начало полного тестового сценария ===');",
+                  "console.log('Время:', new Date().toISOString());"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 1. Получаем токен",
+                  "pm.test('Get auth token', function() {",
+                  "  pm.response.to.have.status(200);",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.token).to.be.a('string');",
+                  "  pm.environment.set('auth_token', jsonData.token);",
+                  "  console.log('Токен получен:', jsonData.token.substring(0, 20) + '...');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"test-user-flow\",\n  \"email\": \"flow@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/token",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "token"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Create Test Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 2. Создаем заказ",
+                  "pm.test('Order created successfully', function() {",
+                  "  pm.response.to.have.status(201);",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.success).to.eql(true);",
+                  "  pm.expect(jsonData.order).to.have.property('id');",
+                  "  pm.environment.set('order_id', jsonData.order.id);",
+                  "  console.log('Заказ создан:', jsonData.order.id);",
+                  "  console.log('Статус:', jsonData.order.status);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"test-user-flow\",\n  \"restaurantId\": \"restaurant-flow-123\",\n  \"totalAmount\": 2000,\n  \"deliveryAddress\": {\n    \"address\": \"ул. Потоковая, д. 1\",\n    \"lat\": 55.751244,\n    \"lng\": 37.618423\n  },\n  \"items\": [\n    {\n      \"itemId\": \"sushi-1\",\n      \"name\": \"Филадельфия\",\n      \"quantity\": 1,\n      \"price\": 800\n    },\n    {\n      \"itemId\": \"sushi-2\",\n      \"name\": \"Калифорния\",\n      \"quantity\": 2,\n      \"price\": 600\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Check Order Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 3. Проверяем статус заказа",
+                  "pm.test('Order status retrieved', function() {",
+                  "  pm.response.to.have.status(200);",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData).to.have.property('status');",
+                  "  pm.expect(jsonData).to.have.property('orderId');",
+                  "  console.log('Статус заказа:', jsonData.status);",
+                  "  console.log('Источник данных:', jsonData.source || 'unknown');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "status"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "⚡ Performance Tests",
+      "item": [
+        {
+          "name": "Load Test - Create Multiple Orders",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "console.log('=== Начало нагрузочного теста ===');",
+                  "console.log('Будет создано 5 заказов...');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"load-test-user\",\n  \"restaurantId\": \"load-test-restaurant\",\n  \"totalAmount\": 1000,\n  \"deliveryAddress\": {\n    \"address\": \"ул. Нагрузочная, д. 1\",\n    \"lat\": 55.75,\n    \"lng\": 37.61\n  },\n  \"items\": [\n    {\n      \"itemId\": \"test-item\",\n      \"name\": \"Тестовый продукт\",\n      \"quantity\": 1,\n      \"price\": 1000\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// Глобальный pre-request скрипт",
+          "console.log('=== Запрос начат ===');",
+          "console.log('Метод:', pm.request.method);",
+          "console.log('URL:', pm.request.url.toString());",
+          "console.log('Время:', new Date().toISOString());"
+        ],
+        "type": "text/javascript"
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "exec": [
+          "// Глобальный тестовый скрипт",
+          "console.log('=== Ответ получен ===');",
+          "console.log('Статус:', pm.response.code, pm.response.status);",
+          "console.log('Время ответа:', pm.response.responseTime, 'ms');",
+          "",
+          "// Базовые проверки",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "pm.test('Status code is successful', function () {",
+          "  pm.response.to.be.success;",
+          "});"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "order_service_url",
+      "value": "http://localhost:3001"
+    },
+    {
+      "key": "delivery_service_url",
+      "value": "http://localhost:3002"
+    },
+    {
+      "key": "auth_token",
+      "value": ""
+    },
+    {
+      "key": "order_id",
+      "value": ""
+    },
+    {
+      "key": "test_user_id",
+      "value": "user-test-123"
+    },
+    {
+      "key": "test_restaurant_id",
+      "value": "restaurant-test-456"
+    }
+  ],
+  "auth": null
+}
